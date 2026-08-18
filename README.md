@@ -184,6 +184,7 @@ vaultenv restore
 | Command | Description |
 |---|---|
 | `vaultenv init` | Generate a recovery phrase and create your vault |
+| `vaultenv login` | Log in to an existing vault on a new machine using your 12-word recovery phrase |
 | `vaultenv backup` | Encrypt and back up all `.env` files in current directory tree |
 | `vaultenv restore` | Download and restore your latest backup |
 | `vaultenv list` | List all backups for this vault |
