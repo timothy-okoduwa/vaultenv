@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import { getFirebaseAdmin } from '@/lib/firebase-admin';
 
 export async function POST(request: Request) {
@@ -14,10 +15,13 @@ export async function POST(request: Request) {
     const vaultRef = db.collection('vaults').doc(providedVaultId);
     const existing = await vaultRef.get();
 
+    const sessionToken = randomUUID();
+
     if (!existing.exists) {
       await vaultRef.set({
         createdAt: new Date(),
         lastBackupAt: null,
+        activeSessionToken: sessionToken,
       });
 
       await db.collection('events').add({
@@ -30,11 +34,19 @@ export async function POST(request: Request) {
         },
         createdAt: new Date(),
       });
+    } else {
+      await vaultRef.update({
+        activeSessionToken: sessionToken,
+      });
     }
 
-    return Response.json({ vaultId: providedVaultId }, { status: existing.exists ? 200 : 201 });
+    return Response.json(
+      { vaultId: providedVaultId, token: sessionToken },
+      { status: existing.exists ? 200 : 201 }
+    );
   } catch (error) {
     console.error('Create vault error:', error);
     return Response.json({ error: 'Failed to create vault' }, { status: 500 });
   }
 }
+

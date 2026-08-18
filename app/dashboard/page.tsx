@@ -46,12 +46,32 @@ export default function DashboardPage() {
     setLoading(true);
     try {
       const id = await deriveVaultId(phrase.trim());
+      const loginRes = await fetch('/api/vault/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vaultId: id }),
+      });
+
+      if (loginRes.status === 404) {
+        toast.error('Vault not found. Run vaultenv init first.');
+        setVaultId(null);
+        setBackups([]);
+        return;
+      }
+
+      if (!loginRes.ok) {
+        toast.error('Failed to log in to vault. Try again.');
+        return;
+      }
+
+      const loginData = (await loginRes.json()) as { vaultId: string; token: string };
+
       const res = await fetch('/api/backups?limit=50', {
-        headers: { Authorization: `Bearer ${id}` },
+        headers: { Authorization: `Bearer ${id}:${loginData.token}` },
       });
 
       if (res.status === 401) {
-        toast.error('Vault not found. Run vaultenv init first.');
+        toast.error('Session expired or unauthorized.');
         setVaultId(null);
         setBackups([]);
         return;
